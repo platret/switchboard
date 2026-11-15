@@ -1,0 +1,22 @@
+node_modules
+dist
+.env
+.env.*
+!.env.example
+/projects.json
+data.nosync
+*.db
+*.db-shm
+*.db-wal
+*.log
+.DS_Store
+*.tsbuildinfo
+xcuserdata
+DerivedData
+apple/build
+* 2
+* 2.*
+.sb-*
+.claude/settings.local.json
+.vscode
+.idea

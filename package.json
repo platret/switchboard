@@ -1,0 +1,18 @@
+{
+  "name": "switchboard",
+  "version": "2.0.0",
+  "description": "A local control center for Claude agents on your Mac and iPhone.",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@12.18.0",
+  "engines": {
+    "node": ">=22.12"
+  },
+  "scripts": {
+    "dev": "pnpm -r --parallel --stream dev",
+    "build": "pnpm --filter @switchboard/web build",
+    "start": "pnpm build && pnpm --filter @switchboard/host start",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm --filter @switchboard/host test"
+  }
+}

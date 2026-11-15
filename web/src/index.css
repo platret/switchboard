@@ -1,0 +1,361 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "@fontsource-variable/onest";
+@import "@fontsource-variable/jetbrains-mono";
+
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+:root {
+  --background: #f4f6f9;
+  --foreground: #171c2b;
+  --card: #ffffff;
+  --card-foreground: #171c2b;
+  --popover: #ffffff;
+  --popover-foreground: #171c2b;
+  --primary: #2747d8;
+  --primary-foreground: #ffffff;
+  --secondary: #e9edf3;
+  --secondary-foreground: #171c2b;
+  --muted: #e9edf3;
+  --muted-foreground: #5b6578;
+  --accent: #e7ecfb;
+  --accent-foreground: #171c2b;
+  --destructive: #c4302a;
+  --border: #dfe4ec;
+  --input: #cbd2de;
+  --ring: #2747d8;
+  --bubble: #e3e9ff;
+  --lamp-idle: #8791a2;
+  --lamp-working: #2747d8;
+  --lamp-waiting: #c97a00;
+  --lamp-error: #c4302a;
+  --waiting-surface: #fff5df;
+  --added: #1a7f4b;
+  --shadow-color: 220 30% 20%;
+  --radius: 0.625rem;
+  --inset-top: env(safe-area-inset-top);
+  color-scheme: light;
+}
+
+[data-theme="dark"] {
+  --background: #0f131c;
+  --foreground: #e8ebf2;
+  --card: #171c28;
+  --card-foreground: #e8ebf2;
+  --popover: #1b2130;
+  --popover-foreground: #e8ebf2;
+  --primary: #8aa0ff;
+  --primary-foreground: #0c1020;
+  --secondary: #222a3b;
+  --secondary-foreground: #e8ebf2;
+  --muted: #1f2636;
+  --muted-foreground: #939eb4;
+  --accent: #232c44;
+  --accent-foreground: #e8ebf2;
+  --destructive: #f0655d;
+  --border: #262e40;
+  --input: #36405a;
+  --ring: #8aa0ff;
+  --bubble: #25305a;
+  --lamp-idle: #6f7a8f;
+  --lamp-working: #8aa0ff;
+  --lamp-waiting: #f2b13a;
+  --lamp-error: #f0655d;
+  --waiting-surface: #2c2410;
+  --added: #5fd09a;
+  --shadow-color: 225 60% 3%;
+  color-scheme: dark;
+}
+
+@theme inline {
+  --font-sans: "Onest Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono Variable", ui-monospace, "SF Mono", monospace;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-bubble: var(--bubble);
+  --color-lamp-idle: var(--lamp-idle);
+  --color-lamp-working: var(--lamp-working);
+  --color-lamp-waiting: var(--lamp-waiting);
+  --color-lamp-error: var(--lamp-error);
+  --color-waiting-surface: var(--waiting-surface);
+  --color-added: var(--added);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 10px);
+  --shadow-float: 0 1px 2px hsl(var(--shadow-color) / 0.08), 0 8px 24px -6px hsl(var(--shadow-color) / 0.22);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+  body {
+    @apply bg-background font-sans text-foreground antialiased;
+    overscroll-behavior: none;
+    -webkit-tap-highlight-color: transparent;
+    font-feature-settings: "ss01", "cv11";
+  }
+  button {
+    cursor: pointer;
+  }
+  ::selection {
+    background: color-mix(in srgb, var(--primary) 30%, transparent);
+  }
+}
+
+.lamp {
+  position: relative;
+  display: inline-block;
+  width: 0.75rem;
+  height: 0.75rem;
+  flex: none;
+  border-radius: 9999px;
+}
+.lamp[data-status="idle"] {
+  border: 2px solid var(--lamp-idle);
+}
+.lamp[data-status="working"] {
+  border: 2px solid color-mix(in srgb, var(--lamp-working) 28%, transparent);
+  border-top-color: var(--lamp-working);
+  animation: lamp-spin 0.9s linear infinite;
+}
+.lamp[data-status="waiting"] {
+  background: var(--lamp-waiting);
+}
+.lamp[data-status="waiting"]::after {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: 9999px;
+  border: 2px solid var(--lamp-waiting);
+  animation: lamp-ring 1.4s ease-out infinite;
+}
+.lamp[data-status="error"] {
+  background: var(--lamp-error);
+  border-radius: 3px;
+}
+.lamp[data-size="sm"] {
+  width: 0.625rem;
+  height: 0.625rem;
+}
+
+.shimmer {
+  background: linear-gradient(90deg, var(--muted-foreground) 0%, var(--foreground) 45%, var(--muted-foreground) 90%);
+  background-size: 220% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: shimmer 2.2s linear infinite;
+}
+
+.listening {
+  animation: listening 1.3s ease-in-out infinite;
+}
+
+@keyframes lamp-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes lamp-ring {
+  from {
+    opacity: 0.9;
+    transform: scale(0.7);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.5);
+  }
+}
+@keyframes shimmer {
+  from {
+    background-position: 110% 0;
+  }
+  to {
+    background-position: -110% 0;
+  }
+}
+@keyframes listening {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--destructive) 45%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 7px color-mix(in srgb, var(--destructive) 0%, transparent);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lamp[data-status="working"],
+  .lamp[data-status="waiting"]::after,
+  .listening {
+    animation: none;
+  }
+  .shimmer {
+    animation: none;
+    color: var(--muted-foreground);
+    background: none;
+  }
+}
+
+.markdown {
+  font-size: 0.9375rem;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+.markdown > :first-child {
+  margin-top: 0;
+}
+.markdown > :last-child {
+  margin-bottom: 0;
+}
+.markdown p,
+.markdown ul,
+.markdown ol,
+.markdown table,
+.markdown blockquote {
+  margin-block: 0.75em;
+}
+.markdown h1,
+.markdown h2,
+.markdown h3,
+.markdown h4 {
+  margin-block: 1.25em 0.45em;
+  font-weight: 650;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+.markdown h1 {
+  font-size: 1.3rem;
+}
+.markdown h2 {
+  font-size: 1.15rem;
+}
+.markdown h3,
+.markdown h4 {
+  font-size: 1rem;
+}
+.markdown ul {
+  list-style: disc;
+  padding-left: 1.3em;
+}
+.markdown ol {
+  list-style: decimal;
+  padding-left: 1.5em;
+}
+.markdown li {
+  margin-block: 0.25em;
+}
+.markdown li::marker {
+  color: var(--muted-foreground);
+}
+.markdown a {
+  color: var(--primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.markdown code {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  background: var(--muted);
+  border-radius: 5px;
+  padding: 0.12em 0.38em;
+}
+.markdown pre {
+  margin: 0;
+  padding: 0.8rem 1rem;
+  overflow-x: auto;
+  line-height: 1.55;
+}
+.markdown pre code {
+  font-variant-ligatures: none;
+  background: none;
+  padding: 0;
+  font-size: 0.8125rem;
+}
+.markdown blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 0.9em;
+  color: var(--muted-foreground);
+}
+.markdown table {
+  display: block;
+  overflow-x: auto;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+.markdown th,
+.markdown td {
+  border: 1px solid var(--border);
+  padding: 0.4em 0.75em;
+  text-align: left;
+}
+.markdown th {
+  background: var(--muted);
+  font-weight: 600;
+}
+.markdown table code {
+  overflow-wrap: normal;
+  white-space: nowrap;
+}
+.markdown hr {
+  border: 0;
+  border-top: 1px solid var(--border);
+  margin-block: 1.2em;
+}
+
+.hljs-comment,
+.hljs-quote {
+  color: var(--muted-foreground);
+  font-style: italic;
+}
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-literal,
+.hljs-built_in {
+  color: var(--primary);
+}
+.hljs-string,
+.hljs-regexp,
+.hljs-addition {
+  color: var(--added);
+}
+.hljs-number,
+.hljs-attr,
+.hljs-attribute,
+.hljs-variable,
+.hljs-template-variable {
+  color: var(--lamp-waiting);
+}
+.hljs-title,
+.hljs-section,
+.hljs-type,
+.hljs-name {
+  color: var(--foreground);
+  font-weight: 600;
+}
+.hljs-deletion {
+  color: var(--destructive);
+}

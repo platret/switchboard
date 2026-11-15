@@ -1,0 +1,36 @@
+[
+  {
+    "id": "webapp",
+    "name": "Web app",
+    "path": "~/code/webapp",
+    "additionalDirectories": [
+      "~/code/shared-lib"
+    ],
+    "agents": [
+      "dev",
+      "tester",
+      "reviewer",
+      "deploy-check"
+    ]
+  },
+  {
+    "id": "sideproject",
+    "name": "Side project",
+    "path": "~/code/sideproject",
+    "agents": [
+      "ideation",
+      "dev",
+      "reviewer",
+      "social"
+    ]
+  },
+  {
+    "id": "learning",
+    "name": "Learning",
+    "path": "~/code/learning",
+    "agents": [
+      "tutor",
+      "reviewer"
+    ]
+  }
+]
