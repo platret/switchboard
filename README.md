@@ -12,10 +12,11 @@
   <img alt="Node 22.12 or newer" src="https://img.shields.io/badge/node-22.12%2B-8aa0ff?style=flat-square&labelColor=141925&logo=nodedotjs&logoColor=white">
   <img alt="TypeScript, strict" src="https://img.shields.io/badge/typescript-strict-8aa0ff?style=flat-square&labelColor=141925&logo=typescript&logoColor=white">
   <img alt="SwiftUI" src="https://img.shields.io/badge/native%20apps-SwiftUI-8aa0ff?style=flat-square&labelColor=141925&logo=swift&logoColor=white">
-  <img alt="Version 2.0.0" src="https://img.shields.io/badge/version-2.0.0-f2b13a?style=flat-square&labelColor=141925">
+  <img alt="Version 2.1.0" src="https://img.shields.io/badge/version-2.1.0-f2b13a?style=flat-square&labelColor=141925">
 </p>
 
 <p align="center">
+  <a href="#install-the-mac-app">Download for Mac</a> ·
   <a href="#quick-start">Quick start</a> ·
   <a href="#how-it-works">How it works</a> ·
   <a href="#security-model">Security model</a> ·
@@ -40,9 +41,21 @@ You give Switchboard a list of project folders. In each project you create agent
 - **Restart safe.** Agents and their history live in a local database, and an agent resumes its session after the host restarts.
 - **Three ways in.** A web app you can install, a Mac app with a menu bar item, and an iPhone app. All three talk to the same host and stay in sync.
 
+## Install the Mac app
+
+The easiest way in. The app brings its own host, so you need no clone, Node or pnpm.
+
+1. Download [Switchboard-2.1.0-arm64.dmg](https://github.com/platret/switchboard/releases/download/v2.1.0/Switchboard-2.1.0-arm64.dmg) (193 MB) from the [v2.1.0 release](https://github.com/platret/switchboard/releases/tag/v2.1.0). It needs a Mac with Apple silicon and macOS 14 or later.
+2. Open it and drag Switchboard into Applications.
+3. The app is not notarized, so macOS stops the first launch. Right-click Switchboard and choose **Open**, or go to **System Settings → Privacy & Security → Open Anyway**.
+
+A short setup then checks your Mac (Claude Code sign-in, the Claude app, Tailscale, notifications), lets you choose project folders and roles, starts the host and pairs your iPhone with a QR code. Settings, the token and history stay in `~/Library/Application Support/Switchboard`. To run setup again, use **Switchboard → Set Up Switchboard…**.
+
+The SHA-256 of the disk image is in the release notes.
+
 ## Quick start
 
-You need a Mac with Node 22.12 or newer, pnpm (`npm install -g pnpm`) and Claude Code installed and logged in, so that `claude` works in your terminal.
+To run Switchboard from source instead, you need a Mac with Node 22.12 or newer, pnpm (`npm install -g pnpm`) and Claude Code installed and logged in, so that `claude` works in your terminal.
 
 ```bash
 git clone https://github.com/platret/switchboard.git
@@ -67,7 +80,7 @@ The first start creates two private files in the repo folder: `.env` with a rand
 
 ## Requirements
 
-- macOS with Node 22.12 or newer and pnpm
+- The Mac app: Apple silicon and macOS 14 or later. From source: macOS with Node 22.12 or newer and pnpm.
 - Claude Code installed and logged in. Agents use that login. `ANTHROPIC_API_KEY` and `ANTHROPIC_AUTH_TOKEN` from your shell are not passed on to them.
 - Tailscale on the Mac and on the iPhone, signed in to the same account. Only needed for phone access.
 - Xcode 26 and XcodeGen. Only needed for the native apps, see [apple/README.md](apple/README.md).
@@ -333,10 +346,10 @@ Switchboard has no service worker, so it always needs the host to be reachable. 
 
 The folder `apple/` holds a Mac app and an iPhone app, written in SwiftUI from one codebase. They do what the web app does and add what a browser cannot:
 
-- **Mac.** A menu bar item that lists waiting approvals and all agents, notifications with Allow and Deny buttons, and after the first `pnpm install` it starts the host by itself. For that, `node` and `pnpm` have to be in `/opt/homebrew/bin` or `/usr/local/bin`.
+- **Mac.** A menu bar item that lists waiting approvals and all agents, notifications with Allow and Deny buttons, and a first-run setup. The downloaded app starts its own built-in host. If you point it at a clone instead, it runs the host from there after the first `pnpm install`; for that, `node` and `pnpm` have to be in `/opt/homebrew/bin` or `/usr/local/bin`.
 - **iPhone.** Pairing by scanning a QR code on the Mac, an approvals tray at the bottom of every screen, dictation on the device, and the token in the Keychain.
 
-There is no download. You build both from source with Xcode 26 and XcodeGen. The Mac app is signed ad hoc, and the iPhone app is signed with your own Apple ID. Build steps, pairing, permissions and troubleshooting are in [apple/README.md](apple/README.md). The short version for the Mac:
+The Mac app is a [download](#install-the-mac-app). The iPhone app has no download yet: you build it from source with Xcode 26 and XcodeGen and sign it with your own Apple ID. Build steps, packaging the disk image, pairing, permissions and troubleshooting are in [apple/README.md](apple/README.md). To build the Mac app yourself:
 
 ```bash
 cd apple
@@ -386,7 +399,7 @@ Background or scheduled agents, email or LinkedIn integrations, publishing to so
 Switchboard is a personal project by [Alex Platret](https://github.com/platret), built for one person.
 
 - There is no licence yet. Until one is chosen, the code is public to read, and the usual rights to reuse it are not granted.
-- The native apps are not notarized and not on the App Store. You build them from source. The Mac app is signed ad hoc, so macOS asks for its permissions again after every rebuild.
+- The native apps are not notarized and not on the App Store. The Mac app is a download signed ad hoc, so macOS stops its first launch and asks for its permissions again after every update or rebuild. The iPhone app you build from source.
 - So far the iPhone app has been tested in the simulator.
 - One user, one Mac, one token. There are no accounts and no roles for people.
 - There is no promise of support or of a stable API.
