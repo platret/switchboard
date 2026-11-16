@@ -11,6 +11,10 @@ enum RepoLocator {
             .path
     }
 
+    static func isRepo(path: String) -> Bool {
+        isRepo(URL(fileURLWithPath: (path as NSString).expandingTildeInPath))
+    }
+
     static func isRepo(_ folder: URL) -> Bool {
         var isDirectory: ObjCBool = false
         guard FileManager.default.fileExists(atPath: folder.appending(path: "host").path, isDirectory: &isDirectory), isDirectory.boolValue else { return false }

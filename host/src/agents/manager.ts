@@ -191,6 +191,7 @@ export class AgentManager {
       role: this.role(agent.role),
       settingSources: this.deps.config.settingSources,
       protectedPaths: this.deps.config.protectedPaths,
+      claudePath: this.deps.config.claudePath,
       authorize: (call) => this.authorize(agentId, call),
       onStderr: (data) => process.stderr.write(`[${agent.name}] ${data}`),
     })

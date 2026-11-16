@@ -183,7 +183,57 @@ The script runs the unit tests and the tests against the live host on `127.0.0.1
 | `macOS` | Mac app entry, main window, menu bar item, host control, settings |
 | `iOS` | iPhone app entry, navigation, approvals tray, QR scanner, settings |
 | `Tests` | Unit tests and live host tests |
-| `Scripts` | `make-icons.mjs` draws the app icon, `test.sh` runs the tests |
+| `Scripts` | `make-icons.mjs` draws the app icon, `test.sh` runs the tests, `make-dmg.sh` builds the disk image (with `bundle-host.mjs` and `host-deps.mjs`) |
+| `Packaging` | The disk image window: background art and `dmg-settings.py` |
+
+## Packaging
+
+`Scripts/make-dmg.sh` builds a Switchboard.app that carries its own host, Node.js and Claude, and packs it into a disk image with the usual drag-to-Applications window. Whoever installs it needs no clone, no Node and no pnpm.
+
+```bash
+apple/Scripts/make-dmg.sh
+```
+
+It prints the paths and sizes at the end. The image is `apple/build/Switchboard-<version>-arm64.dmg`, with the version taken from `MARKETING_VERSION` in `project.yml`. Everything it builds stays in `apple/build`, which git ignores. Downloads are cached in `~/Library/Caches/switchboard-build`, so later runs work from the cache. Run it again after any change; it starts from a clean stage each time.
+
+It needs Xcode, XcodeGen, pnpm with `pnpm install` done in the repo, and [uv](https://docs.astral.sh/uv/) for `uvx`. It builds for Apple silicon only.
+
+What the script does:
+
+1. Downloads the official Node.js 24 LTS for darwin-arm64 from nodejs.org and checks it against the SHA-256 in that release's `SHASUMS256.txt`. The version is pinned at the top of the script. Homebrew's node cannot ship in an app because it links against other Homebrew libraries.
+2. Builds the web app and bundles the host code (`host/src/index.ts`, `@switchboard/shared`, Express and ws) into one file with the esbuild that comes with tsx (`Scripts/bundle-host.mjs`). The bundle also gets a `THIRD-PARTY-NOTICES.txt` with the licences of what went into it.
+3. Installs the packages the bundle keeps outside with the downloaded node's npm: `@anthropic-ai/claude-agent-sdk` with its darwin-arm64 claude binary, `better-sqlite3` and `zod`. `Scripts/host-deps.mjs` pins them, and everything they pull in, to the versions in `pnpm-lock.yaml`. The tree is flat and has no symlinks. better-sqlite3 13 ships Node-API prebuilds, which work with any Node version; only the darwin-arm64 one is kept. No install scripts run.
+4. Checks that better-sqlite3 and the Agent SDK load with the bundled node and that `claude --version` runs.
+5. Builds the `Switchboard macOS` scheme in Release for arm64, copies the host into the app and signs it from the inside out.
+6. Makes the disk image with [dmgbuild](https://github.com/dmgbuild/dmgbuild) (pinned, run through `uvx`). Without uvx, or when dmgbuild fails, it falls back to `hdiutil` with a plain window and says so.
+7. Mounts the image read-only and checks that it holds the app and the Applications link and that the app's signature still verifies.
+
+The host inside the app:
+
+| Path in `Switchboard.app/Contents/Resources` | What it is |
+|---|---|
+| `Host/start` | Starts the host. Switchboard runs it with `SWITCHBOARD_HOME` set and that folder as the working directory. It `exec`s node, so stopping the process stops the host. |
+| `Host/node` | Node.js 24 LTS from nodejs.org |
+| `Host/claude` | Link to the Agent SDK's claude binary in `app/node_modules` |
+| `Host/app` | The host's root folder: `host/dist/index.mjs`, `web/dist`, `roles.json`, `projects.example.json`, `node_modules` |
+
+The packaged host keeps its settings, token, `projects.json` and database in `~/Library/Application Support/Switchboard` (the `SWITCHBOARD_HOME` folder, see the [README one folder up](../README.md)). A host started from a clone keeps working as before.
+
+To try the bundled host without the app (use a free port, not the one your own host runs on):
+
+```bash
+home=$(mktemp -d)
+printf 'SWITCHBOARD_PORT=4392\n' > "$home/.env"
+SWITCHBOARD_HOME="$home" apple/build/dist/Switchboard.app/Contents/Resources/Host/start
+```
+
+**Signing.** There is no Developer ID here, so the app is signed ad hoc and not notarized. The script signs each Mach-O file in `Host` before the app itself: unsigned files (the better-sqlite3 addon) ad hoc, while `node` and `claude` keep the Developer ID signatures that the Node.js project and Anthropic notarized them with. Pass `--adhoc-all` to sign those two ad hoc as well. It ends with `codesign --verify --deep --strict`. Because the app is not notarized, macOS refuses to open it the first time it is downloaded: Control-click the app in Applications and choose Open, or allow it under System Settings, Privacy and Security. Copies built on your own Mac open without that.
+
+**Window art.** `Packaging/dmg-background.html` is the source of the image window background. `Packaging/render-background.mjs` renders it with headless Chrome to `dmg-background.png`, `dmg-background@2x.png` and the Retina `dmg-background.tiff` that dmgbuild uses. The rendered files are committed, so building the image needs no Chrome. After changing the art, render it again and keep the icon positions in `Packaging/dmg-settings.py` on the two slots, which are centred at (170, 190) and (490, 190) in the 660 by 420 window:
+
+```bash
+node apple/Packaging/render-background.mjs path/to/folder/with/puppeteer-core
+```
 
 ## App icon
 

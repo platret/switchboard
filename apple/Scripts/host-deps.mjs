@@ -1,0 +1,130 @@
+// Writes the package.json for the packaged host's node_modules.
+//
+//   node apple/Scripts/host-deps.mjs <pnpm-lock.yaml> <out/package.json>
+//
+// The host code is bundled into one file, except for the packages listed in ROOTS below, which
+// npm installs next to it. This script pins those packages to the exact versions in pnpm-lock.yaml
+// and adds an `overrides` entry for every package they pull in, so npm installs the same tree the
+// repo is tested with instead of the newest versions that match the ranges.
+import { readFileSync, writeFileSync } from 'node:fs'
+
+const ROOTS = ['@anthropic-ai/claude-agent-sdk', 'better-sqlite3', 'zod']
+const PLATFORM_SUFFIXES = ['-darwin-arm64']
+
+const [lockFile, outFile] = process.argv.slice(2)
+if (!lockFile || !outFile) {
+  console.error('usage: host-deps.mjs <pnpm-lock.yaml> <out/package.json>')
+  process.exit(2)
+}
+
+const lines = readFileSync(lockFile, 'utf8').split('\n')
+
+/** Strips the peer suffix pnpm adds to versions: `1.8.0(zod@4.6.7)` -> `1.8.0`. */
+const bare = (version) => version.replace(/\(.*$/, '').trim()
+const unquote = (text) => text.trim().replace(/^'(.*)'$/, '$1')
+
+/** Splits `@scope/name@1.2.3(peer@1)` into name and version. */
+function splitKey(key) {
+  const at = key.indexOf('@', 1)
+  return { name: key.slice(0, at), version: bare(key.slice(at + 1)) }
+}
+
+// importers.host.dependencies: the versions the host itself resolves.
+const hostVersions = new Map()
+// snapshots: package key -> { dependencies, optionalDependencies }
+const snapshots = new Map()
+
+let section = null
+let importer = null
+let importerGroup = null
+let currentDep = null
+let snapshot = null
+let snapshotGroup = null
+
+for (const line of lines) {
+  if (/^\S/.test(line)) {
+    section = line.replace(/:.*$/, '')
+    importer = null
+    snapshot = null
+    continue
+  }
+  if (section === 'importers') {
+    let match
+    if ((match = /^ {2}(\S.*):$/.exec(line))) {
+      importer = unquote(match[1])
+      importerGroup = null
+    } else if (importer === 'host' && (match = /^ {4}(\w+):$/.exec(line))) {
+      importerGroup = match[1]
+    } else if (importer === 'host' && importerGroup === 'dependencies' && (match = /^ {6}(\S.*):$/.exec(line))) {
+      currentDep = unquote(match[1])
+    } else if (importer === 'host' && importerGroup === 'dependencies' && (match = /^ {8}version: (.*)$/.exec(line))) {
+      hostVersions.set(currentDep, bare(unquote(match[1])))
+    }
+  } else if (section === 'snapshots') {
+    let match
+    if ((match = /^ {2}(\S.*?):( \{\})?$/.exec(line))) {
+      snapshot = { key: unquote(match[1]), dependencies: new Map() }
+      snapshots.set(snapshot.key, snapshot)
+      snapshotGroup = null
+    } else if (snapshot && (match = /^ {4}(\w+):$/.exec(line))) {
+      snapshotGroup = match[1]
+    } else if (snapshot && (snapshotGroup === 'dependencies' || snapshotGroup === 'optionalDependencies') && (match = /^ {6}(\S.*?): (.*)$/.exec(line))) {
+      const name = unquote(match[1])
+      const optional = snapshotGroup === 'optionalDependencies'
+      // Of the platform packages only the one for this Mac is needed.
+      if (optional && /-(darwin|linux|win32)-/.test(name) && !PLATFORM_SUFFIXES.some((suffix) => name.endsWith(suffix))) continue
+      snapshot.dependencies.set(name, unquote(match[2]))
+    }
+  }
+}
+
+function findSnapshot(name, version) {
+  const exact = snapshots.get(`${name}@${version}`)
+  if (exact) return exact
+  for (const [key, value] of snapshots) if (key.startsWith(`${name}@${bare(version)}`) && splitKey(key).version === bare(version)) return value
+  for (const [key, value] of snapshots) if (key.startsWith(`${name}@${version}`)) return value
+  return null
+}
+
+const dependencies = {}
+const seen = new Map() // name -> Set of versions
+const queue = []
+
+for (const name of ROOTS) {
+  const version = hostVersions.get(name)
+  if (!version) throw new Error(`${name} is not a dependency of host in ${lockFile}`)
+  dependencies[name] = version
+  queue.push([name, version])
+}
+
+while (queue.length > 0) {
+  const [name, version] = queue.shift()
+  const versions = seen.get(name) ?? new Set()
+  if (versions.has(bare(version))) continue
+  versions.add(bare(version))
+  seen.set(name, versions)
+  const entry = findSnapshot(name, version)
+  if (!entry) throw new Error(`No snapshot for ${name}@${version} in ${lockFile}`)
+  for (const [child, childVersion] of entry.dependencies) {
+    // Peer suffixes in the reference point at the full snapshot key.
+    const key = childVersion.includes('(') ? childVersion : bare(childVersion)
+    queue.push([child, key])
+  }
+}
+
+const overrides = {}
+for (const [name, versions] of [...seen].sort(([a], [b]) => a.localeCompare(b))) {
+  if (name in dependencies || versions.size !== 1) continue
+  overrides[name] = [...versions][0]
+}
+
+const manifest = {
+  name: 'switchboard-host-runtime',
+  private: true,
+  type: 'module',
+  description: 'Packages the bundled Switchboard host loads at runtime. Generated by apple/Scripts/host-deps.mjs.',
+  dependencies,
+  overrides,
+}
+writeFileSync(outFile, `${JSON.stringify(manifest, null, 2)}\n`)
+console.log(`${outFile}: ${Object.keys(dependencies).length} packages, ${Object.keys(overrides).length} pinned dependencies of them`)

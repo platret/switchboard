@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { mkdirSync, mkdtempSync, realpathSync, symlinkSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { isProjectEdit, needsApproval } from '../src/agents/policy.ts'
@@ -68,4 +68,38 @@ test('turn trust does not follow a symlink out of the project', () => {
   symlinkSync(outside, join(project, 'link'))
   assert.equal(isProjectEdit('Write', { file_path: join(project, 'ok.txt') }, [project], []), true)
   assert.equal(isProjectEdit('Write', { file_path: join(project, 'link', 'escaped.txt') }, [project], []), false)
+})
+
+test('reads do not follow a symlink to a secret or out of the project', (t) => {
+  const base = realpathSync.native(mkdtempSync(join(tmpdir(), 'sb-policy-')))
+  t.after(() => rmSync(base, { recursive: true, force: true }))
+  const project = join(base, 'project')
+  const home = join(base, 'home')
+  const outside = join(base, 'outside')
+  for (const folder of [project, home, outside]) mkdirSync(folder)
+  writeFileSync(join(home, '.env'), 'SWITCHBOARD_TOKEN=x\n')
+  writeFileSync(join(outside, 'notes.txt'), 'x\n')
+  symlinkSync(join(home, '.env'), join(project, 'notes.txt'))
+  symlinkSync(home, join(project, 'home-link'))
+  symlinkSync(join(outside, 'notes.txt'), join(project, 'outside.txt'))
+  const secrets = [join(home, '.env'), home]
+  assert.equal(needsApproval('Read', { file_path: join(project, 'notes.txt') }, [project], secrets), true)
+  assert.equal(needsApproval('Read', { file_path: 'notes.txt' }, [project], secrets), true)
+  assert.equal(needsApproval('Grep', { pattern: 'TOKEN', path: 'home-link' }, [project], secrets), true)
+  assert.equal(needsApproval('Read', { file_path: 'outside.txt' }, [project], secrets), true)
+  writeFileSync(join(project, 'plain.txt'), 'x\n')
+  assert.equal(needsApproval('Read', { file_path: 'plain.txt' }, [project], secrets), false)
+})
+
+test('a secret reached through a symlinked parent folder still needs approval', (t) => {
+  const base = realpathSync.native(mkdtempSync(join(tmpdir(), 'sb-policy-')))
+  t.after(() => rmSync(base, { recursive: true, force: true }))
+  const realHome = join(base, 'real home')
+  const linkedHome = join(base, 'linked home')
+  const project = join(base, 'project')
+  mkdirSync(realHome)
+  mkdirSync(project)
+  symlinkSync(realHome, linkedHome)
+  writeFileSync(join(realHome, '.env'), 'SWITCHBOARD_TOKEN=x\n')
+  assert.equal(needsApproval('Read', { file_path: join(realHome, '.env') }, [project, base], [join(linkedHome, '.env')]), true)
 })

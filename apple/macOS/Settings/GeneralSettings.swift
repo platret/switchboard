@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct GeneralSettings: View {
+    @Environment(MacSession.self) private var session
     @Environment(AppStore.self) private var store
 
     var body: some View {
@@ -12,6 +13,13 @@ struct GeneralSettings: View {
                 SectionTitle("Startup")
             } footer: {
                 Text("Switchboard keeps its menu bar item while the main window is closed.")
+            }
+            Section {
+                Button("Set Up Switchboard…") { session.showOnboarding() }
+            } header: {
+                SectionTitle("Setup")
+            } footer: {
+                Text("Walk through the checks, projects and iPhone pairing again.")
             }
             NotificationSettings()
             Section {

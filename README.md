@@ -203,12 +203,27 @@ All settings live in `.env`. The host creates that file by itself, so copying `.
 | `SWITCHBOARD_PORT` | `4317` | Port for HTTP and WebSocket |
 | `SWITCHBOARD_SETTING_SOURCES` | `user,project,local` | Which Claude Code settings agents load. `project` loads the project folder's `CLAUDE.md` and `.claude/`. `user` adds your global `~/.claude` plugins, hooks, skills and MCP servers. |
 | `SWITCHBOARD_APPROVAL_TIMEOUT_SECONDS` | `600` | Seconds until an unanswered approval is denied. 600 is also the maximum. |
-| `SWITCHBOARD_DATA_DIR` | `data.nosync` in the repo | Folder for the database |
-| `SWITCHBOARD_TAILSCALE_IP` | detected | Set it if the Tailscale address is not found automatically. Only addresses in 100.64.0.0/10 are accepted. |
+| `SWITCHBOARD_DATA_DIR` | `data.nosync` in the repo, or `data` in `SWITCHBOARD_HOME` | Folder for the database. Use an absolute path or one that starts with `~`. |
+| `SWITCHBOARD_TAILSCALE_IP` | detected | Set it if the Tailscale address is not found automatically. Only addresses in 100.64.0.0/10 are accepted. `off` listens on 127.0.0.1 only, which is what test runs should use. |
+| `SWITCHBOARD_CLAUDE_PATH` | the Agent SDK's own | Path to the `claude` executable agents run. Must be an existing executable file. Use an absolute path or one that starts with `~`. |
+
+A relative path in `SWITCHBOARD_DATA_DIR` or `SWITCHBOARD_CLAUDE_PATH` is resolved against the folder the host was started in, which is `host/` under `pnpm` and the settings folder in the Mac app, so the same line means different places.
 
 To change the token, edit the value in `.env` and restart the host. Browsers and the iPhone app then ask for the new one.
 
 With `user` in the setting sources, every agent starts with all your global plugins and hooks. That is convenient, but it makes turns slower and each agent heavier. Use `SWITCHBOARD_SETTING_SOURCES=project,local` for lean agents.
+
+### Settings folder outside the repo
+
+By default the host keeps its writable files in the repo: `.env`, `projects.json` and `data.nosync/`. Set `SWITCHBOARD_HOME` in the shell environment (not in `.env`, which lives inside it) to keep them in another folder instead:
+
+```sh
+SWITCHBOARD_HOME=~/Library/Application\ Support/Switchboard pnpm start
+```
+
+That folder then holds `.env`, `projects.json` (created empty), an optional `roles.json` that replaces the repo's one, and the database in `data/`. The host creates the folder with access for your user only. The web app and the default roles still come from the repo. Agents cannot read that folder, and changes there always need your approval. The packaged Mac app uses `~/Library/Application Support/Switchboard`.
+
+`pnpm dev` only watches the repo's `projects.json`, `roles.json` and `.env`. With `SWITCHBOARD_HOME` set, restart the host yourself after you edit the files in that folder.
 
 ## Add a project
 

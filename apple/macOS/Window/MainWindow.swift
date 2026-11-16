@@ -4,6 +4,7 @@ struct MainWindow: View {
     @Environment(MacSession.self) private var session
     @Environment(AppStore.self) private var store
     @Environment(\.openWindow) private var openWindow
+    @Environment(\.dismissWindow) private var dismissWindow
     @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
@@ -32,7 +33,11 @@ struct MainWindow: View {
         .deleteAgentConfirmation(for: $session.deleting)
         .frame(minWidth: 900, idealWidth: 1160, minHeight: 560, idealHeight: 760)
         .focusedSceneValue(\.agents, FocusedAgents(shortcuts: session.shortcutAgents, selected: store.selectedAgent))
-        .onAppear { session.openMainWindow = { openWindow(id: MacSession.mainWindowID) } }
+        .onAppear {
+            session.openMainWindow = { openWindow(id: MacSession.mainWindowID) }
+            session.openOnboarding = { openWindow(id: MacSession.onboardingWindowID) }
+            if session.hidesMainWindowAtLaunch() { dismissWindow(id: MacSession.mainWindowID) }
+        }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { store.refreshConnection() }
         }

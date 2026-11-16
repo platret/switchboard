@@ -15,7 +15,8 @@ const hub = new Hub()
 const auth = createAuth(config.token)
 const manager = new AgentManager({ agents: createAgentRepo(db), messages: createMessageRepo(db), hub, config })
 const hosts = ['127.0.0.1', ...(config.tailscaleAddress ? [config.tailscaleAddress] : [])]
-if (!config.tailscaleAddress) console.log('No Tailscale address found. Listening on this Mac only. Start Tailscale and restart to reach Switchboard from your phone.')
+if (config.localOnly) console.log('SWITCHBOARD_TAILSCALE_IP is off. Listening on this Mac only.')
+else if (!config.tailscaleAddress) console.log('No Tailscale address found. Listening on this Mac only. Start Tailscale and restart to reach Switchboard from your phone.')
 
 const servers = createServers(
   { api: createRoutes({ manager }), auth, webDir: config.webDir, onSocket: (socket) => attachClient(socket, { hub, manager, auth }) },

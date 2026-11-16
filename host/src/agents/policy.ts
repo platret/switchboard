@@ -30,15 +30,17 @@ function readsOutside(input: Record<string, unknown>, roots: string[]): boolean 
   if (cwd === undefined) return true
   const pattern = text(input, 'pattern')
   const targets = [text(input, 'file_path'), text(input, 'path'), pattern !== null && leavesProject(pattern) ? pattern : null]
-  return targets.some((target) => target !== null && !isInside(roots, absolute(cwd, target)))
+  return targets.some((target) => target !== null && !isInside(roots, canonical(absolute(cwd, target))))
 }
 
+/** Checks the path as written and with symlinks resolved, so a link inside a project cannot reach a secret. */
 function touchesSecret(input: Record<string, unknown>, roots: string[], secrets: string[]): boolean {
   const [cwd] = roots
   const target = text(input, 'file_path') ?? text(input, 'path')
   if (cwd === undefined || target === null) return false
   const path = absolute(cwd, target)
-  return secrets.some((secret) => path === secret || path.startsWith(secret + sep))
+  const guarded = secrets.flatMap((secret) => [secret, canonical(secret)])
+  return isInside(guarded, path) || isInside(guarded, canonical(path))
 }
 
 const controlFolders = ['.claude', '.git']

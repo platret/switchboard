@@ -25,6 +25,7 @@ export type OptionsInput = {
   role: Role
   settingSources: SettingSource[]
   protectedPaths: string[]
+  claudePath?: string | null
   authorize: (call: ToolCall) => Promise<Verdict>
   onStderr: (data: string) => void
 }
@@ -33,7 +34,7 @@ function childEnv(): Record<string, string | undefined> {
   return Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith(hostOnlyPrefix) && !strippedEnvKeys.includes(key)))
 }
 
-export function buildOptions({ agent, project, role, settingSources, protectedPaths, authorize, onStderr }: OptionsInput): Options {
+export function buildOptions({ agent, project, role, settingSources, protectedPaths, claudePath, authorize, onStderr }: OptionsInput): Options {
   const gate: HookCallback = async (input, _toolUseId, { signal }) => {
     if (input.hook_event_name !== 'PreToolUse') return {}
     const verdict = await authorize({ toolUseId: input.tool_use_id, toolName: input.tool_name, input: input.tool_input, signal, prompted: false })
@@ -66,5 +67,6 @@ export function buildOptions({ agent, project, role, settingSources, protectedPa
       return verdict.decision === 'allow' ? { behavior: 'allow', updatedInput: input } : { behavior: 'deny', message: verdict.reason }
     },
     stderr: onStderr,
+    ...(claudePath ? { pathToClaudeCodeExecutable: claudePath } : {}),
   }
 }

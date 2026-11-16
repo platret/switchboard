@@ -10,7 +10,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
-        MacSession.shared.showMainWindow()
+        let session = MacSession.shared
+        if session.onboarding.isPresented { session.showOnboarding() } else { session.showMainWindow() }
         return false
     }
 

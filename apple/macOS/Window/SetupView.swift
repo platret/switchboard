@@ -1,6 +1,14 @@
 import SwiftUI
 
 struct SetupView: View {
+    @Environment(HostController.self) private var host
+
+    private var note: String {
+        host.source?.kind == .bundled
+            ? "Switchboard connects by itself once the host runs."
+            : "Switchboard connects by itself once the host runs and the repo folder in Settings holds its .env file."
+    }
+
     var body: some View {
         Form {
             Section {
@@ -9,7 +17,7 @@ struct SetupView: View {
             } header: {
                 SectionTitle("This Mac")
             } footer: {
-                Text("Switchboard connects by itself once the host runs and the repo folder in Settings holds its .env file.")
+                Text(note)
             }
             ConnectionFields()
         }
