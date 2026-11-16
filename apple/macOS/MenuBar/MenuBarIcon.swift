@@ -23,6 +23,10 @@ struct MenuBarIcon: View {
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(spoken)
-        .onAppear { session.openMainWindow = { openWindow(id: MacSession.mainWindowID) } }
+        .onAppear {
+            session.openMainWindow = { openWindow(id: MacSession.mainWindowID) }
+            session.openOnboarding = { openWindow(id: MacSession.onboardingWindowID) }
+            session.presentOnboardingAtLaunch()
+        }
     }
 }

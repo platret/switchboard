@@ -39,7 +39,7 @@ extension AppStore {
         #if os(macOS)
         let saved = settings.endpoint?.isLocal == false ? tokens.read() : nil
         if let saved { return saved }
-        if let fromRepo = await repoToken() { return fromRepo }
+        if let fromHost = await localHostToken() { return fromHost }
         #endif
         return tokens.read()
     }
@@ -55,8 +55,8 @@ extension AppStore {
         return value
     }
 
-    private func repoToken() async -> String? {
-        let folder = settings.repoFolder
+    private func localHostToken() async -> String? {
+        let folder = localEnvFolder?() ?? settings.repoFolder
         return await readingFolders { EnvFile.token(inFolder: folder) }
     }
 

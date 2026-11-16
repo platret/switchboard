@@ -10,7 +10,7 @@ struct ConnectingView: View {
         }
         switch host.state {
         case .unknown: return "Looking for the host on this Mac."
-        case .starting: return "Starting the host. The first start builds the web app and can take a minute."
+        case .starting: return host.source?.startingDetail ?? "Starting the host."
         case .running: return "Reaching \(store.settings.hostURL)"
         case .stopping: return "The host is stopping."
         case .stopped: return "The host is not running."

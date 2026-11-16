@@ -15,6 +15,8 @@ struct PairingCode: View {
                     .scaledToFit()
                     .padding(12)
                     .background(.white, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(Surface.hairline, lineWidth: 1))
+                    .shadow(color: .black.opacity(0.06), radius: 8, y: 2)
                     .accessibilityElement()
                     .accessibilityLabel("Pairing code for the iPhone app")
                     .accessibilityAddTraits(.isImage)

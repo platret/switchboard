@@ -14,6 +14,13 @@ struct SwitchboardMacApp: App {
             AppCommands(session: session)
         }
 
+        Window("Set Up Switchboard", id: MacSession.onboardingWindowID) {
+            OnboardingWindow().session(session)
+        }
+        .windowStyle(.hiddenTitleBar)
+        .windowResizability(.contentSize)
+        .defaultPosition(.center)
+
         MenuBarExtra {
             MenuBarContent().session(session)
         } label: {

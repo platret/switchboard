@@ -1,0 +1,53 @@
+<!doctype html>
+<!--
+  Background of the Switchboard disk image window.
+  Rendered to dmg-background.png (660x420) and dmg-background@2x.png (1320x840) by render-background.mjs.
+  The two icon slots are centred at (170, 190) and (490, 190), matching icon_locations in dmg-settings.py.
+  Finder draws the icon labels in the system label colour: near black in Light Mode, white in Dark Mode.
+  The pills behind the labels are #737d8f, where both reach about 3.5:1 or better at Finder's 85% label opacity.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Switchboard disk image background</title>
+<style>
+  @font-face {
+    font-family: 'Onest';
+    font-weight: 100 900;
+    src: url('../../web/node_modules/@fontsource-variable/onest/files/onest-latin-wght-normal.woff2') format('woff2');
+  }
+  html, body {
+    margin: 0;
+    width: 660px;
+    height: 420px;
+    overflow: hidden;
+    background: #f4f6f9;
+  }
+  svg { display: block; }
+  .hint {
+    font-family: 'Onest', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.005em;
+    fill: #5b6578;
+  }
+</style>
+</head>
+<body>
+<svg width="660" height="420" viewBox="0 0 660 420" xmlns="http://www.w3.org/2000/svg">
+  <!-- A hairline from the app slot to the Applications slot, ending in an open chevron. -->
+  <g fill="none" stroke="#8791a2" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="275" y1="190" x2="391" y2="190" stroke-opacity="0.8" />
+    <polyline points="385,183.5 391.5,190 385,196.5" stroke-opacity="1" />
+  </g>
+  <!-- Small dots where the line starts, so it reads as a path rather than a divider. -->
+  <circle cx="268.5" cy="190" r="1.6" fill="#8791a2" fill-opacity="0.8" />
+  <!-- Label pills, so the Finder labels under the 128 px icons stay readable in Light and Dark Mode. -->
+  <g fill="#737d8f">
+    <rect x="108" y="255" width="124" height="26" rx="13" />
+    <rect x="428" y="255" width="124" height="26" rx="13" />
+  </g>
+  <text class="hint" x="330" y="322" text-anchor="middle">Drag Switchboard into Applications</text>
+</svg>
+</body>
+</html>

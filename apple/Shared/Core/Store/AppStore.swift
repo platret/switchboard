@@ -29,6 +29,8 @@ final class AppStore {
     @ObservationIgnored var notifications: NotificationPosting?
     @ObservationIgnored var approvalHold: Task<Void, Never>?
     @ObservationIgnored var connecting: Task<Void, Never>?
+    /// The folder whose .env holds the local host's token. The Mac app points it at the host it runs.
+    @ObservationIgnored var localEnvFolder: (() -> String)?
 
     init(client: SwitchboardClient? = nil, settings: AppSettings = AppSettings(), tokens: TokenStore = KeychainTokenStore(), notifications: NotificationPosting? = nil) {
         let client = client ?? SwitchboardClient()

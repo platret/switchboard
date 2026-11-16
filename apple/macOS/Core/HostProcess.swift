@@ -15,11 +15,17 @@ final class HostProcess: @unchecked Sendable {
     }
 
     func start(command: String, folder: String, onOutput: @escaping @Sendable (String) -> Void, onExit: @escaping @Sendable (Int32) -> Void) throws {
+        let launch = HostLaunch(executable: HostSource.shell, arguments: ["-c", command], folder: folder, note: "", failure: "")
+        try start(launch, onOutput: onOutput, onExit: onExit)
+    }
+
+    func start(_ launch: HostLaunch, onOutput: @escaping @Sendable (String) -> Void, onExit: @escaping @Sendable (Int32) -> Void) throws {
         var environment = ProcessInfo.processInfo.environment
         environment["PATH"] = HostProcess.searchPath
-        process.executableURL = URL(fileURLWithPath: "/bin/zsh")
-        process.arguments = ["-c", command]
-        process.currentDirectoryURL = URL(fileURLWithPath: (folder as NSString).expandingTildeInPath)
+        environment.merge(launch.environment) { _, new in new }
+        process.executableURL = launch.executable
+        process.arguments = launch.arguments
+        process.currentDirectoryURL = URL(fileURLWithPath: (launch.folder as NSString).expandingTildeInPath)
         process.environment = environment
         process.standardInput = FileHandle.nullDevice
         process.standardOutput = pipe

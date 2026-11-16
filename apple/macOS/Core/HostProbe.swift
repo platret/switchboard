@@ -13,6 +13,15 @@ enum HostProbe {
         return (try? await URLSession.shared.data(for: request)) != nil
     }
 
+    static func accepts(token: String, port: Int) async -> Bool {
+        guard let url = URL(string: "http://127.0.0.1:\(port)/api/") else { return false }
+        var request = URLRequest(url: url, timeoutInterval: 1.5)
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        request.cachePolicy = .reloadIgnoringLocalCacheData
+        guard let (_, response) = try? await URLSession.shared.data(for: request) else { return false }
+        return (response as? HTTPURLResponse)?.statusCode != 401
+    }
+
     static func listenerPids(port: Int) async -> [Int32] {
         await Task.detached {
             let process = Process()

@@ -6,6 +6,9 @@ struct AppCommands: Commands {
     @FocusedValue(\.agents) private var focused
 
     var body: some Commands {
+        CommandGroup(after: .appInfo) {
+            Button("Set Up Switchboard…") { session.showOnboarding() }
+        }
         CommandGroup(replacing: .newItem) {
             Button("New agent") { session.newAgent() }.keyboardShortcut("n")
             Button("Quick switcher") { session.quickSwitch() }.keyboardShortcut("k")
